@@ -18,7 +18,7 @@ class InitDB
     createTF_table(db)
     createBodtText_table(db)
     createDF_view(db)
-    createTFIDF_view(db)
+    createTFIDF_table(db)
     db.close
   end
 
@@ -58,8 +58,8 @@ SQL
   def createBodtText_table(db)
     sql = <<SQL
 create table bodytext (
- doc_id integer,
- kw_id integer
+  doc_id integer,
+  kw_id integer
 );
 SQL
     
@@ -76,13 +76,13 @@ SQL
     db.execute(sql)
     end
 
-  def createTFIDF_view(db)
+  def createTFIDF_table(db)
     sql = <<SQL
-create view tfidf as 
-select 
-tf.kw_id, ROUND(1.0 + cast(tf.count as REAL) / df.count, 8) as score
-from tf, df
-where tf.kw_id = df.kw_id;
+create table tfidf (
+ doc_id integer,
+ kw_id integer,
+ score real
+);
 SQL
     
     db.execute(sql)

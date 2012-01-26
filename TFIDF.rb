@@ -15,7 +15,7 @@ class TFIDF
     dbfile = "tfidf.sqlite"
     initdb = InitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
-    @tfidf = Hash.new
+#    @tfidf = Hash.new
   end
   
   def closeDB
@@ -31,7 +31,7 @@ class TFIDF
       next if word["feature"] == "、" # 多分、分かち書きですでに捨てている
       next if word["feature"] == "." # 多分、分かち書きですでに捨てている
       next if word["feature"] == "," # 多分、分かち書きですでに捨てている
-#      next unless word["wordclass"] =~ /名詞/
+      next unless word["wordclass"] =~ /名詞/
       kw_id = setKeywordId(word["feature"])
 #      print kw_id, word["feature"], "\n"
       storeTF(kw_id)
@@ -102,15 +102,8 @@ class TFIDF
   
   def showTFIDF
     print "show TFIDF\n"
-    @db.execute("select keywords.word, tfidf.score from keywords, tfidf where keywords.kw_id = tfidf.kw_id"){|keyword, score|
+    @db.execute("select keywords.word, total(tfidf.score) from keywords, tfidf where keywords.kw_id = tfidf.kw_id group by kw_id order by tfidf.score"){|keyword, score|
       print keyword, ",", score, "\n"
-    }
-  end
-
-  def showTF
-    print "show TF\n"
-    @db.execute("select * from tf"){|kw_id, count|
-      print kw_id, ",", count, "\n"
     }
   end
 
@@ -144,7 +137,7 @@ class TFIDF
 select * 
 from df LEFT OUTER JOIN 
 (select kw_id, count(kw_id) from bodytext where doc_id = :doc_id group by kw_id) as bodytext
-on df.kw_id = bodytext.kw_id
+using (kw_id)
 ORDER BY kw_id;
 SQL
     docs.each{|doc_id, uri|
@@ -152,7 +145,7 @@ SQL
       print uri, ","
       
       num_of_words = @db.get_first_value("select count(*) from bodytext where doc_id = :doc_id", :doc_id => doc_id)
-      @db.execute(sql, :doc_id => doc_id){|kw_id, df, id, tf|
+      @db.execute(sql, :doc_id => doc_id){|kw_id, df, tf|
         tf = 0.0 if tf == nil
 #        print "wk_id:", kw_id,"\n"
 #        print "tf:", tf,"\n"
@@ -183,7 +176,6 @@ if $0 == __FILE__
   tfidf.store(uri, text)
   
   tfidf.showBodyText()
-#  tfidf.showTF()
   tfidf.showDF()
 #  tfidf.showTFIDF()
 
