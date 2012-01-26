@@ -61,7 +61,8 @@ SQL
 
   
   def outputTFIDF
-    words = @db.query("select word from keywords order by kw_id")
+#    words = @db.query("select word from keywords order by kw_id")
+    words = @db.query("select keyword.word from keywords,df where keyword.kw_id = df.kw_id order by kw_id")
     print "DocID", ","
     words.each{|word|
       print word, ","
