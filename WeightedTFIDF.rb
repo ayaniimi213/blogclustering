@@ -16,6 +16,8 @@ class WeightedTFIDF < TFIDF
   end
 
   def loadDic(filename)
+    setDF_table(@db)
+
     # 辞書の内容を読み込む
 
     @weight =  2.0 # 重み一定
@@ -63,6 +65,8 @@ SQL
 
   
   def outputTFIDF
+    setDF_table(@db)
+
 #    words = @db.query("select word from keywords order by kw_id")
     words = @db.query("select keywords.word from keywords,df where keywords.kw_id = df.kw_id order by keywords.kw_id")
     print "DocID", ","
@@ -122,14 +126,13 @@ if $0 == __FILE__
   tfidf.store(uri, text)
   
   tfidf.showBodyText()
-  tfidf.showDF()
-
-  tfidf.loadDic("test.dic")
-  tfidf.showImportant()
+#  tfidf.showDF()
 
 #  tfidf.showTFIDF()
 #  tfidf.showWTFIDF()
 
+    tfidf.loadDic("test.dic")
+#    tfidf.showImportant()
   tfidf.outputTFIDF()
 
 #  tfidf.closeDB()
