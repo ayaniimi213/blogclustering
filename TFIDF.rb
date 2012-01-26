@@ -10,28 +10,28 @@ require 'easymecab'
 require 'InitDB'
 
 class TFIDF
-  def initialize()
+  def initialize
     #sqliteまわりの設定
     dbfile = "tfidf.sqlite"
-    initdb = InitDB.new(dbfile)
+    initdb = InitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
     @tfidf = Hash.new
   end
   
-  def closeDB()
+  def closeDB
     @db.close
   end
 
   def store(uri, text)
-    doc_id = 0
     doc_id = setDocId(uri)
     words = wakati(text)
     words.each{|word|
       # 原型を取りたい
-      next if word["feature"] == "。"
-      next if word["feature"] == "、"
-      next if word["feature"] == "."
-      next if word["feature"] == ","
+      next if word["feature"] == "。" # 多分、分かち書きですでに捨てている
+      next if word["feature"] == "、" # 多分、分かち書きですでに捨てている
+      next if word["feature"] == "." # 多分、分かち書きですでに捨てている
+      next if word["feature"] == "," # 多分、分かち書きですでに捨てている
+#      next unless word["wordclass"] =~ /名詞/
       kw_id = setKeywordId(word["feature"])
 #      print kw_id, word["feature"], "\n"
       storeTF(kw_id)
@@ -50,10 +50,10 @@ class TFIDF
     # DocIDを割り付ける
     doc_id = 0
     @db.transaction do
-      doc_id = @db.get_first_value('select count(*) from docs')
-      doc_id = doc_id + 1
       sql = "insert into docs(uri) values(:uri)"
       @db.execute(sql, :uri => uri)
+      sql = "select LAST_INSERT_ROWID()"
+      doc_id = @db.get_first_value(sql)
     end
 
     return doc_id
@@ -68,8 +68,8 @@ class TFIDF
       if kw_id == nil then
         sql = "insert into keywords(word) values(:word)"
         @db.execute(sql, :word => keyword)
-        sql = "select kw_id from keywords where word = :word"
-        kw_id = @db.get_first_value(sql, :word => keyword)
+        sql = "select LAST_INSERT_ROWID()"
+        kw_id = @db.get_first_value(sql)
        end
     end
 
@@ -84,58 +84,45 @@ class TFIDF
   end
   
   def storeTF(kw_id)
-#    print "storeTF\n"
     @db.transaction do
       sql = "select count from tf where kw_id = :kw_id"
       count = @db.get_first_value(sql, :kw_id => kw_id)
       if count == nil then
         count = 1
-        sql = "insert into tf(count) values(:count)"
-#        print "count new\n"
-        @db.execute(sql, :count => count)
+        sql = "insert into tf(kw_id, count) values(:kw_id, :count)"
+        @db.execute(sql, :kw_id => kw_id, :count => count)
       else
         count = count + 1
         sql = "update tf set count = :count where kw_id = :kw_id"
-#        print "countUPP!", count, "\n"
         @db.execute(sql, :kw_id => kw_id, :count => count)
       end
 #      print kw_id, ",", count, "\n"
     end
   end
   
-  def setTFIDF
-    tfidf = 0.0
-    sql = "select kw_id, score from tfidf"
-    result = @db.query(sql)
-    result.each{|id, score|
-      @tfidf[id] = score
-    }
-  end
-
-  def getTFIDF(kw_id)
-#    tfidf = 0.0
-#    sql = "select kw_id, score from tfidf"
-#    result = @db.query(sql)
-#    result.each{|id, score|
-#      tfidf = score if id == kw_id
-#    }
-#    return tfidf
-    return @tfidf[kw_id]
-  end
-
   def showTFIDF
+    print "show TFIDF\n"
     @db.execute("select keywords.word, tfidf.score from keywords, tfidf where keywords.kw_id = tfidf.kw_id"){|keyword, score|
       print keyword, ",", score, "\n"
     }
   end
 
+  def showTF
+    print "show TF\n"
+    @db.execute("select * from tf"){|kw_id, count|
+      print kw_id, ",", count, "\n"
+    }
+  end
+
   def showDF
+    print "show DF\n"
     @db.execute("select * from df"){|doc_id, count|
       print doc_id, ",", count, "\n"
     }
   end
 
-  def showDocBody
+  def showBodyText
+    print "show bodytext"
     @db.execute("select * from bodytext"){|doc_id, kw_id|
       print doc_id, ",", kw_id, "\n"
     }
@@ -150,22 +137,29 @@ class TFIDF
     print "\n"
     
     docs = @db.query("select doc_id, uri from docs")
+    num_of_docs = @db.get_first_value("select count(*) from docs")
+#    p num_of_docs
 
+    sql = <<SQL
+select * 
+from df LEFT OUTER JOIN 
+(select kw_id, count(kw_id) from bodytext where doc_id = :doc_id group by kw_id) as bodytext
+on df.kw_id = bodytext.kw_id
+ORDER BY kw_id;
+SQL
     docs.each{|doc_id, uri|
+#      print doc_id, ","
       print uri, ","
-      keywords =  @db.query("select kw_id from keywords order by kw_id")
-      containedKeywords = @db.query("select DISTINCT kw_id from bodytext where doc_id = :doc_id", :doc_id => doc_id)
-
-      keywords.each{|kw_id|
-#        print kw_id, ","
-
-        score = 0.0
-        containedKeywords.each{|id|
-          if kw_id == id then
-            score = getTFIDF(kw_id)
-          end
-        }
-        print score, ","
+      
+      num_of_words = @db.get_first_value("select count(*) from bodytext where doc_id = :doc_id", :doc_id => doc_id)
+      @db.execute(sql, :doc_id => doc_id){|kw_id, df, id, tf|
+        tf = 0.0 if tf == nil
+#        print "wk_id:", kw_id,"\n"
+#        print "tf:", tf,"\n"
+#        print "N:", num_of_words, "\n"
+#        print "df:", df,"\n"
+#        print "D:", num_of_docs, "\n"
+        print (tf.to_f / num_of_words) * (1.0 + Math.log(num_of_docs.to_f / df)), ","
       }
       print "\n"
     }
@@ -175,23 +169,22 @@ class TFIDF
 end
 
 if $0 == __FILE__
-  uri = "http://hoehoe/poepoe/"
-  text = "今日もしないとね。今日もしないとね。"
-  
-  print text, "\n"
+
   tfidf = TFIDF.new()
-  
-  tfidf.store(uri, text)
-  
-  uri = "http://hoehoe/poepoe/"
-  text = "今日もしないとね。"
-  
+
+  uri = "http://url1"
+  text = "今日もしないとね。今日もしないとね。昨日、昨日。"
   print text, "\n"
-  
   tfidf.store(uri, text)
   
-  #  tfidf.showDocBody()
-  #  tfidf.showDF()
+  uri = "http://url2"
+  text = "今日もしないとね。明日。"
+  print text, "\n"
+  tfidf.store(uri, text)
+  
+  tfidf.showBodyText()
+#  tfidf.showTF()
+  tfidf.showDF()
 #  tfidf.showTFIDF()
 
   tfidf.outputTFIDF()

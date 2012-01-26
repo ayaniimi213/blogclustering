@@ -27,9 +27,9 @@ sameSite = "1"
 
 file = open(ARGV[0])
 
-#tfidf = TFIDF.new()
-tfidf = WeightedTFIDF.new()
-tfidf.loadDic(ARGV[1])
+tfidf = TFIDF.new()
+#tfidf = WeightedTFIDF.new()
+#tfidf.loadDic(ARGV[1])
 
 while base = file.gets do
   base.chomp!
@@ -51,7 +51,7 @@ while base = file.gets do
   }
 end
 
-tfidf.showTFIDF()
+# tfidf.showTFIDF()
 tfidf.outputTFIDF()
 
 file.close

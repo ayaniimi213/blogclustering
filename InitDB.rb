@@ -80,7 +80,7 @@ SQL
     sql = <<SQL
 create view tfidf as 
 select 
-tf.kw_id, ROUND(1.0 + cast(tf.count as REAL) / df.count, 7) as score
+tf.kw_id, ROUND(1.0 + cast(tf.count as REAL) / df.count, 8) as score
 from tf, df
 where tf.kw_id = df.kw_id;
 SQL

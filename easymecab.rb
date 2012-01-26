@@ -11,7 +11,7 @@ class MeCab
 	def initialize(option)
 #		@path = 'c:\Program Files\MeCab\bin\mecab.exe' # MeCabへのパス
 		@path = '/usr/local/bin/mecab' # MeCabへのパス
-		@option = option
+		@option = option + "--input-buffer-size=10000000"
 	end
 	def parse_file(s)
 		cmd_string = [@path, @option, s].join(" ")
