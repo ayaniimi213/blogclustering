@@ -17,7 +17,8 @@ class InitDB
     createDocs_table(db)
     createTF_table(db)
     createBodtText_table(db)
-    createDF_view(db)
+#    createDF_view(db)
+    createDF_table(db)
     createTFIDF_table(db)
     db.close
   end
@@ -31,6 +32,7 @@ create table keywords (
 SQL
     
     db.execute(sql)
+    db.execute("create index keywords_idx on keywords(kw_id)")
   end
     
   def createDocs_table(db)
@@ -42,6 +44,7 @@ create table docs (
 SQL
     
     db.execute(sql)
+    db.execute("create index docs_idx on docs(doc_id)")
 end
   
   def createTF_table(db)
@@ -64,6 +67,8 @@ create table bodytext (
 SQL
     
     db.execute(sql)
+    db.execute("create index bodytext_doc_id_idx on bodytext(doc_id)")
+    db.execute("create index bodytext_kw_id_idx on bodytext(kw_id)")
     end
 
   def createDF_view(db)
@@ -74,6 +79,20 @@ create view df as select kw_id, count(*) as count from
 SQL
     
     db.execute(sql)
+
+    end
+
+  def createDF_table(db)
+    sql = <<SQL
+create table df (
+  kw_id INTEGER PRIMARY KEY,
+  count integer
+);
+SQL
+    
+    db.execute(sql)
+    db.execute("create index df_idx on df(kw_id)")
+
     end
 
   def createTFIDF_table(db)
@@ -86,6 +105,8 @@ create table tfidf (
 SQL
     
     db.execute(sql)
+    db.execute("create index tfidf_doc_id_idx on tfidf(doc_id)")
+    db.execute("create index tfidf_kw_id_idx on tfidf(kw_id)")
   end
   
 end

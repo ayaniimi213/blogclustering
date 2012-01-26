@@ -12,6 +12,7 @@ class WeightedTFIDF < TFIDF
     dbfile = "tfidf.sqlite"
     initdb = WeightedInitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
+    @db.cache_size = 80000 # PRAGMA page_countを見て、とりあえずそれより大きい値を設定
   end
 
   def loadDic(filename)
@@ -32,6 +33,7 @@ class WeightedTFIDF < TFIDF
   end
 
   def setImportant_table(db)
+    db.execute("delete from important")
     sql = <<SQL
 insert into important(kw_id, weight)
 select kw_id, 1.0 from df
@@ -62,7 +64,7 @@ SQL
   
   def outputTFIDF
 #    words = @db.query("select word from keywords order by kw_id")
-    words = @db.query("select keyword.word from keywords,df where keyword.kw_id = df.kw_id order by kw_id")
+    words = @db.query("select keywords.word from keywords,df where keywords.kw_id = df.kw_id order by keywords.kw_id")
     print "DocID", ","
     words.each{|word|
       print word, ","

@@ -21,7 +21,6 @@ class WeightedInitDB < InitDB
     
     
   def createImportant_table(db)
-#    db.execute("drop table important")
     sql = <<SQL
 create table important (
  kw_id INTEGER PRIMARY KEY,
@@ -30,12 +29,7 @@ create table important (
 SQL
     
     db.execute(sql)
-
-    sql = <<SQL
-insert into important(kw_id, weight)
-select kw_id, 1.0 from df
-SQL
-    db.execute(sql)
+    db.execute("create index important_idx on important(kw_id)")
   end
 
 
@@ -49,6 +43,9 @@ create table wtfidf (
 SQL
     
     db.execute(sql)
+    db.execute("create index wtfidf_doc_id_idx on wtfidf(doc_id)")
+    db.execute("create index wtfidf_kw_id_idx on wtfidf(kw_id)")
+
   end
   
 end

@@ -15,7 +15,7 @@ class TFIDF
     dbfile = "tfidf.sqlite"
     initdb = InitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
-#    @tfidf = Hash.new
+    @db.cache_size = 80000 # PRAGMA page_countを見て、とりあえずそれより大きい値を設定
   end
   
   def closeDB
@@ -100,6 +100,17 @@ class TFIDF
     end
   end
   
+  def setDF_table(db)
+    db.execute("delete from df")
+    sql = <<SQL
+insert into df(kw_id, count)
+ select kw_id, count(*) as count from
+(select DISTINCT * from bodytext)
+ group by kw_id;
+SQL
+    db.execute(sql)
+  end
+
   def showTFIDF
     print "show TFIDF\n"
     @db.execute("select keywords.word, total(tfidf.score) from keywords, tfidf where keywords.kw_id = tfidf.kw_id group by kw_id order by tfidf.score"){|keyword, score|
@@ -122,6 +133,8 @@ class TFIDF
   end
 
   def outputTFIDF
+    setDF_table(@db)
+
     words = @db.query("select word from keywords order by kw_id")
     print "DocID", ","
     words.each{|word|
