@@ -7,20 +7,20 @@ require 'WeightedInitDB'
 
 class WeightedTFIDF < TFIDF
 
-  def initialize
+  def initialize(dbfile)
     #sqliteまわりの設定
-    dbfile = "tfidf.sqlite"
     initdb = WeightedInitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
     @db.cache_size = 80000 # PRAGMA page_countを見て、とりあえずそれより大きい値を設定
   end
 
-  def loadDic(filename)
+  def loadDic(filename, weight)
     setDF_table(@db)
 
     # 辞書の内容を読み込む
 
-    @weight =  2.0 # 重み一定
+#    @weight =  2.0 # 重み一定
+    @weight =  weight
 
     setImportant_table(@db)
     file = open(filename)
@@ -113,7 +113,7 @@ end
 
 if $0 == __FILE__
 
-  tfidf = WeightedTFIDF.new()
+  tfidf = WeightedTFIDF.new("tfidf.sqlite")
 
   uri = "http://url1"
   text = "今日もしないとね。今日もしないとね。昨日、昨日。"
@@ -131,7 +131,7 @@ if $0 == __FILE__
 #  tfidf.showTFIDF()
 #  tfidf.showWTFIDF()
 
-    tfidf.loadDic("test.dic")
+    tfidf.loadDic("test.dic", 2.0)
 #    tfidf.showImportant()
   tfidf.outputTFIDF()
 

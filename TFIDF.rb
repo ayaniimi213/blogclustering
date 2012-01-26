@@ -10,9 +10,8 @@ require 'easymecab'
 require 'InitDB'
 
 class TFIDF
-  def initialize
+  def initialize(dbfile)
     #sqliteまわりの設定
-    dbfile = "tfidf.sqlite"
     initdb = InitDB.new(dbfile) unless FileTest.file?(dbfile)
     @db = SQLite3::Database.new(dbfile)
     @db.cache_size = 80000 # PRAGMA page_countを見て、とりあえずそれより大きい値を設定
@@ -176,7 +175,7 @@ end
 
 if $0 == __FILE__
 
-  tfidf = TFIDF.new()
+  tfidf = TFIDF.new("tfidf.sqlite")
 
   uri = "http://url1"
   text = "今日もしないとね。今日もしないとね。昨日、昨日。"
