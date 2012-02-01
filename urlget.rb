@@ -3,13 +3,13 @@
 $KCODE="u"
 
 if ( RUBY_VERSION < "1.9" )
-  require 'mwextractcontenttest'
+  require 'mymwextractcontenttest'
   require 'GetFactory'
 #  require 'MeCab' # need install MeCab and see mecab document
   require 'easymecab'
   require 'WeightedTFIDF'
 else
-  require_relative 'mwextractcontenttest'
+  require_relative 'mymwextractcontenttest'
   require_relative 'GetFactory'
 #  require_relative 'MeCab' # need install MeCab and see mecab document
   require_relative 'easymecab'
@@ -17,19 +17,34 @@ else
 end
 
 #usage:
-# ruby urlget.rb blog_500.txt
-# ruby urlget.rb blog_500.txt keyword.txt
+# ruby urlget.rb blog_500.txt tfidf.sqlite
+# ruby urlget.rb blog_500.txt tfidf.sqlite keyword.txt
 
 # 深さ
 depth    = "1"
 # 同一サイトのみ探索
 sameSite = "1"
 
+if ARGV.size == 2
+  listfile = ARGV[0]
+  dbfile = ARGV[1]
+elsif ARGV.size == 3
+  listfile = ARGV[0]
+  dbfile = ARGV[1]
+  dicfile = ARGV[2]
+else
+  print "usage:\n"
+  print " ruby urlget.rb blog_500.txt tfidf.sqlite\n"
+  print " ruby urlget.rb blog_500.txt tfidf.sqlite keyword.txt\n"
+end
 
-file = open(ARGV[0])
+file = open(listfile)
 
-tfidf = TFIDF.new()
-#tfidf = WeightedTFIDF.new()
+if dicfile == nil
+  tfidf = TFIDF.new(dbfile)
+else
+  tfidf = WeightedTFIDF.new(dbfile)
+end
 
 while base = file.gets do
   base.chomp!
@@ -42,7 +57,7 @@ while base = file.gets do
   dailyUrls =  get.extract
 
   dailyUrls.each{|url|
-    mwTest = MwExtractCountentTest.new(sameSite.to_i)
+    mwTest = MyMwExtractCountentTest.new(sameSite.to_i)
     mwTest.test(url, depth.to_i)
 #    p mwTest.getBody()
 #    m = MeCab.new("")
@@ -51,7 +66,10 @@ while base = file.gets do
   }
 end
 
-#tfidf.loadDic(ARGV[1])
+if dicfile != nil
+  tfidf.loadDic(dicfile, 2.0)
+end
+
 # tfidf.showTFIDF()
 tfidf.outputTFIDF()
 

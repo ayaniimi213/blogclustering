@@ -1,7 +1,5 @@
 #!/usr/bin/ruby -Ku
-# -*- coding: utf-8 -*-
 $KCODE="u"
-require "nkf"
 
 # Author:: Masato Watanabe
 # License:: BSD
@@ -37,11 +35,7 @@ require 'hpricot'
 require 'open-uri'
 require 'set'
 require 'uri'
-if ( RUBY_VERSION < "1.9" )
-  require 'extractcontent'
-else
-  require_relative 'extractcontent'
-end
+require 'extractcontent'
 
 class MwExtractCountentTest
 
@@ -51,7 +45,6 @@ class MwExtractCountentTest
     @sameSite = sameSite
     # オプション値の指定
     ExtractContent::set_default({:waste_expressions => /お問い合わせ|会社概要/})
-    @body_text
   end
 
   # テスト実行
@@ -88,18 +81,7 @@ class MwExtractCountentTest
       body, title = ExtractContent::analyse(doc.to_html)
 
       # 本文保存
-#      saveResult(url, title, body, doc)
-#      print title, "\n"
-      text = ""
-      if ( RUBY_VERSION < "1.9" )
-        text = NKF::nkf('-wm0',body)
-      else
-        text = body.encode("UTF-8")
-      end
-
-#      print text
-      @body_text = text
-
+      saveResult(url, title, body, doc)
       sleep 5
 
       # リンクを取得する
@@ -119,7 +101,7 @@ class MwExtractCountentTest
         end
         urlMap[href] = 0
       end
-   end
+    end
   rescue => esc
     p esc
   end
@@ -141,10 +123,6 @@ class MwExtractCountentTest
     file = File.open(fileName, "w")
     file.puts doc.to_html
     file.close
-  end
-
-  def getBody
-    return @body_text
   end
 end
 
