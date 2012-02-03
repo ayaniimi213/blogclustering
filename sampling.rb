@@ -27,14 +27,16 @@ class Sampling
       size.times {
         sampleset.push(docs.shift)
       }
-      createtable(i)
-      insertvalue(sampleset, i)
+      createtable_bodytext(i)
+      insertvalue_bodytext(sampleset, i)
+      createtable_docs(i)
+      insertvalue_docs(sampleset, i)
     }
 
     
   end
 
-  def createtable(num)
+  def createtable_bodytext(num)
     sql = <<SQL
 create table tablename (
   doc_id integer,
@@ -47,14 +49,34 @@ SQL
     @db.execute("create index tablename_kw_id_idx on tablename (kw_id)".gsub("tablename", "bodytext_" + num.to_s))
     end
 
-  def insertvalue(docs, num)
+  def createtable_docs(num)
+    sql = <<SQL
+create table tablename (
+ doc_id INTEGER PRIMARY KEY,
+ uri text
+);
+SQL
+    
+    db.execute(sql.sub("tablename", "docs_" + num.to_s))
+    db.execute("create index tablename_idx on tablename (doc_id)".gsub("tablename", "docs_" + num.to_s))
+    end
+
+  def insertvalue_bodytext(docs, num)
     sql = <<SQL
 insert into tablename (doc_id, kw_id)
 select doc_id, kw_id from bodytext
 where doc_id in (:docs);
 SQL
-    p docs
     @db.execute(sql.sub("tablename", "bodytext_" + num.to_s), :docs => docs.join("."))
+  end
+
+  def insertvalue_docs(docs, num)
+    sql = <<SQL
+insert into tablename (doc_id, uri)
+select doc_id, uri from docs
+where doc_id in (:docs);
+SQL
+    @db.execute(sql.sub("tablename", "docs_" + num.to_s), :docs => docs.join("."))
   end
 
 

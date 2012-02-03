@@ -134,7 +134,8 @@ SQL
   def outputTFIDF
     setDF_table(@db)
 
-    words = @db.query("select word from keywords order by kw_id")
+#    words = @db.query("select word from keywords order by kw_id")
+    words = @db.query("select keywords.word from keywords,df where keywords.kw_id = df.kw_id order by keywords.kw_id")
     print "DocID", ","
     words.each{|word|
       print word, ","
