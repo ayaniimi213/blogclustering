@@ -12,7 +12,6 @@ class Sampling
   end
 
   def sampling(size, times)
-#    docs = Array.new
     docs = @db.execute("select DISTINCT doc_id from bodytext").flatten
 
     docs.each_index{|i|
@@ -22,7 +21,6 @@ class Sampling
     
     i = 0
     times.times {
-      i = i + 1
       sampleset = Array.new
       size.times {
         sampleset.push(docs.shift)
@@ -31,6 +29,7 @@ class Sampling
       insertvalue_bodytext(sampleset, i)
       createtable_docs(i)
       insertvalue_docs(sampleset, i)
+      i = i + 1
     }
 
     
@@ -43,7 +42,7 @@ create table tablename (
   kw_id integer
 );
 SQL
-    print(sql.sub("tablename", "bodytext_" + num.to_s))
+
     @db.execute(sql.sub("tablename", "bodytext_" + num.to_s))
     @db.execute("create index tablename_doc_id_idx on tablename (doc_id)".gsub("tablename", "bodytext_" + num.to_s))
     @db.execute("create index tablename_kw_id_idx on tablename (kw_id)".gsub("tablename", "bodytext_" + num.to_s))
@@ -67,7 +66,8 @@ insert into tablename (doc_id, kw_id)
 select doc_id, kw_id from bodytext
 where doc_id in (:docs);
 SQL
-    @db.execute(sql.sub("tablename", "bodytext_" + num.to_s), :docs => docs.join("."))
+
+    @db.execute(sql.sub("tablename", "bodytext_" + num.to_s).sub(":docs", docs.join(",")))
   end
 
   def insertvalue_docs(docs, num)
@@ -76,7 +76,8 @@ insert into tablename (doc_id, uri)
 select doc_id, uri from docs
 where doc_id in (:docs);
 SQL
-    @db.execute(sql.sub("tablename", "docs_" + num.to_s), :docs => docs.join("."))
+
+    @db.execute(sql.sub("tablename", "docs_" + num.to_s).sub(":docs", docs.join(",")))
   end
 
 
@@ -88,5 +89,5 @@ if $0 == __FILE__
   num_of_set = 10
 
   sampling = Sampling.new("tfidf.sqlite")
-  sampling.sampling(size, nom_of_set)
+  sampling.sampling(size, num_of_set)
 end
