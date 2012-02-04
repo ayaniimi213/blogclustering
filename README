@@ -1,4 +1,28 @@
 
+
+■ TFIDF.rb, WeightedTFIDF.rb
+
+指定したBlogサイトから本文を入手し、単語毎のTF-IDF値を求めるスクリプト
+
+WeightedTFIDF.rbは指定した辞書の単語に対してTF-IDF値に重みをつけるスクリプト
+
+作成したTF-IDFベクトルはRを使ってクラスタリングを行う。
+
+■ sampling.rb
+
+> sampling.rb
+
+tfidf.sqliteのbodytextテーブル（各Blog記事にどの単語が使われているのかを格納したテーブル）とdocsテーブル(doc_idとuriを格納したテーブル)からランダムサンプリングを行い、検証用データセットを作成するスクリプト
+
+使い方:
+dbファイル名、1グループあたりの記事数、サンプリングするグループ数を設定し、以下のコマンドを実行する。
+
+> ruby sampling.rb
+
+実行結果は表示されず、dbファイル中にbodytext_?とdocs_?のテーブルが作成される。
+
+■ 利用しているライブラリなど
+
 extractcontent.rb
 Original from 
 Webページの本文抽出 (nakatani @ cybozu labs) http://labs.cybozu.co.jp/blog/nakatani/2007/09/web_1.html
