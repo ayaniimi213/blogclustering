@@ -57,8 +57,8 @@ create table tablename (
 );
 SQL
     
-    db.execute(sql.sub("tablename", "docs_" + num.to_s))
-    db.execute("create index tablename_idx on tablename (doc_id)".gsub("tablename", "docs_" + num.to_s))
+    @db.execute(sql.sub("tablename", "docs_" + num.to_s))
+    @db.execute("create index tablename_idx on tablename (doc_id)".gsub("tablename", "docs_" + num.to_s))
     end
 
   def insertvalue_bodytext(docs, num)
@@ -83,6 +83,10 @@ SQL
 end
 
 if $0 == __FILE__
+  # 元データからランダムにsize個のデータセットをnum_of_set分作成するスクリプト
+  size = 100
+  num_of_set = 10
+
   sampling = Sampling.new("tfidf.sqlite")
-  sampling.sampling(100,10)
+  sampling.sampling(size, nom_of_set)
 end
